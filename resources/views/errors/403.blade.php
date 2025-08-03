@@ -1,0 +1,11 @@
+@extends('layouts.error')
+@section('content')
+    <div class="main-wrapper">
+        <div class="error-box">
+            <h1>403</h1>
+            <h3 class="h2 mb-3"><i class="fas fa-exclamation-triangle"></i> Unauthorized!</h3>
+            <p class="h4 font-weight-normal">You are not authorized for this page.</p>
+            <a href="/dashboard" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+@endsection
