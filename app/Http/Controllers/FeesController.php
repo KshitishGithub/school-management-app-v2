@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendFirebaseNotification;
 use App\Models\class_manage;
 use App\Models\fees;
 use App\Models\session;
@@ -222,15 +223,49 @@ class FeesController extends Controller
 
                     $feesRecords[] = $fees;
 
-                    // Send notification function
-                    $notification = FirebasePushNotification(
+                    // Set base message
+                    switch ($fees_type) {
+                        case 'Admission Fees':
+                            $messageBody = "Your Admission Fees of ₹{$request->amount[$index]} has been received successfully.";
+                            break;
+
+                        case 'School Fees':
+                            $month = $request->month[$index] ?? 'N/A';
+                            $messageBody = "Your School Fees of ₹{$request->amount[$index]} for the month of {$month} has been received successfully.";
+                            break;
+
+                        case 'Exam Fees':
+                            $messageBody = "Your Exam Fees of ₹{$request->amount[$index]} has been received successfully.";
+                            break;
+
+                        case 'Hostel Fees':
+                            $month = $request->month[$index] ?? 'N/A';
+                            $messageBody = "Your Hostel Fees of ₹{$request->amount[$index]} for the month of {$month} has been received successfully.";
+                            break;
+
+                        default:
+                            $month = $request->month[$index] ?? 'N/A';
+                            $messageBody = "Your {$fees_type} of ₹{$request->amount[$index]} for the month of {$month} has been received successfully.";
+                            break;
+                    }
+
+                    // $notification = FirebasePushNotification(
+                    //     [$request->s_id],
+                    //     "Dear {$request->name}",
+                    //     $messageBody,
+                    //     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShVwg_8v81VD3V4qn89R49mbWM9vzyDodV6A&s"
+                    // );
+                    // $notificationResponses[] = json_decode($notification)->status;
+
+                    dispatch(new SendFirebaseNotification(
                         [$request->s_id],
                         "Dear {$request->name}",
-                        "Your {$fees_type} of {$request->amount[$index]} for the month of " . ($request->month[$index] ?? 'N/A') . " has been received successfully.",
+                        $messageBody,
                         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShVwg_8v81VD3V4qn89R49mbWM9vzyDodV6A&s"
-                    );
+                    ));
 
-                    $notificationResponses[] = json_decode($notification)->status;
+                    // Always assume notification will be processed in background
+                    $notificationResponses[] = true;
                 }
             });
 
@@ -311,7 +346,7 @@ class FeesController extends Controller
             });
 
             if ($Fees->isNotEmpty()) {
-                return view('fees.fees_details', compact('Fees','id'));
+                return view('fees.fees_details', compact('Fees', 'id'));
             } else {
                 return redirect('404');
             }

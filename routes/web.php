@@ -433,3 +433,20 @@ Route::get('/run-scheduler', function () {
         return redirect()->back();
     }
 });
+
+
+
+Route::get('/test-firebase-token', function () {
+    try {
+        $token = getFirebaseAccessToken();
+        return response()->json([
+            'status' => 'success',
+            'token' => $token
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});

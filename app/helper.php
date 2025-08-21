@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\DB;
 use App\Models\setting;
 use Illuminate\Support\Facades\Http;
+use Google\Auth\Credentials\ServiceAccountCredentials;
+use Illuminate\Support\Facades\Cache;
 
 
 // ! Print functionality
@@ -35,14 +37,51 @@ if (!function_exists('convertNumber')) {
         $num = (int) $num;
         $words = array();
         $list1 = array(
-            '', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven',
-            'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen'
+            '',
+            'one',
+            'two',
+            'three',
+            'four',
+            'five',
+            'six',
+            'seven',
+            'eight',
+            'nine',
+            'ten',
+            'eleven',
+            'twelve',
+            'thirteen',
+            'fourteen',
+            'fifteen',
+            'sixteen',
+            'seventeen',
+            'eighteen',
+            'nineteen'
         );
         $list2 = array('', 'ten', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety', 'hundred');
         $list3 = array(
-            '', 'thousand', 'million', 'billion', 'trillion', 'quadrillion', 'quintillion', 'sextillion', 'septillion',
-            'octillion', 'nonillion', 'decillion', 'undecillion', 'duodecillion', 'tredecillion', 'quattuordecillion',
-            'quindecillion', 'sexdecillion', 'septendecillion', 'octodecillion', 'novemdecillion', 'vigintillion'
+            '',
+            'thousand',
+            'million',
+            'billion',
+            'trillion',
+            'quadrillion',
+            'quintillion',
+            'sextillion',
+            'septillion',
+            'octillion',
+            'nonillion',
+            'decillion',
+            'undecillion',
+            'duodecillion',
+            'tredecillion',
+            'quattuordecillion',
+            'quindecillion',
+            'sexdecillion',
+            'septendecillion',
+            'octodecillion',
+            'novemdecillion',
+            'vigintillion'
         );
         $num_length = strlen($num);
         $levels = (int) (($num_length + 2) / 3);
@@ -174,89 +213,84 @@ function FirebasePushNotification($registration_ids = [], $title = 'School Siksh
 {
     $tokens = [];
 
-    // Fetch device tokens from the database using registration_ids
+    // Fetch device tokens from the database
     foreach ($registration_ids as $registration_id) {
         $deviceToken = DB::table('device_token')
-            ->where('registration_id', $registration_id)
+            ->where('registration_id', operator: $registration_id)
             ->value('device_token');
 
-        // Add the device token to the tokens array
         if ($deviceToken) {
             $tokens[] = $deviceToken;
         }
     }
 
-    // No device tokens found
+    // No tokens found
     if (empty($tokens)) {
         return json_encode(['status' => false, 'message' => 'No device tokens available']);
     }
 
-    // Path to your service account key file
-    $serviceAccountPath = storage_path('firebase/service-account.json');
-    if (!file_exists($serviceAccountPath)) {
-        return json_encode(['status' => false, 'message' => 'Firebase service account file not found']);
-    }
+    // Load Firebase access token from settings
+    // $accessToken = \App\Models\Setting::value('firebase_token'); // Adjust if needed
+    $accessToken = getFirebaseAccessToken();
 
-    // Call the function to send push notification
-    $accessToken = setting::all()[0]['firebase_token'];
-    // Generate an OAuth2 access token
     if (!$accessToken) {
-        return json_encode(['status' => false, 'message' => 'Failed to generate Firebase access token']);
+        return json_encode(['status' => false, 'message' => 'Firebase access token not found']);
     }
 
-    // Create the message payload
-    $message = [
-        'message' => [
-            'notification' => [
-                'title' => $title,
-                'body' => $body,
-                'image' => $image,
-            ],
-            'token' => count($tokens) === 1 ? $tokens[0] : null,
-            'tokens' => count($tokens) > 1 ? $tokens : null,
-            'android' => [
-                'priority' => 'HIGH',
-            ],
-            'apns' => [
-                'headers' => [
-                    'apns-priority' => '10',
+    // Firebase project ID
+    $projectId = '549430247722'; // Replace with your actual project ID
+
+    $url = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
+
+    $responses = [];
+
+    foreach ($tokens as $token) {
+        $payload = [
+            'message' => [
+                'token' => $token,
+                'notification' => [
+                    'title' => $title,
+                    'body' => $body,
+                    'image' => $image ?: null,
                 ],
-                'payload' => [
-                    'aps' => [
-                        'sound' => 'default',
+                'android' => [
+                    'priority' => 'HIGH',
+                ],
+                'apns' => [
+                    'headers' => [
+                        'apns-priority' => '10',
+                    ],
+                    'payload' => [
+                        'aps' => [
+                            'sound' => 'default',
+                        ],
                     ],
                 ],
-            ],
-        ],
-    ];
+            ]
+        ];
 
-    // Send the notification via HTTP v1 API
-    $url = 'https://fcm.googleapis.com/v1/projects/school-siksha-49dcf/messages:send'; // Replace YOUR_PROJECT_ID
-    $headers = [
-        'Authorization: Bearer ' . $accessToken,
-        'Content-Type: application/json',
-    ];
+        $response = Http::withToken($accessToken)
+            ->withHeaders([
+                'Content-Type' => 'application/json',
+            ])
+            ->post($url, $payload);
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($message));
-    $result = curl_exec($ch);
-
-    if ($result === FALSE) {
-        return json_encode(['status' => false, 'message' => 'FCM Send Error: ' . curl_error($ch)]);
+        if ($response->successful()) {
+            $responses[] = ['token' => $token, 'status' => true];
+        } else {
+            $responses[] = [
+                'token' => $token,
+                'status' => false,
+                'error' => $response->json()
+            ];
+        }
     }
 
-    curl_close($ch);
-    $response = json_decode($result, true);
-
-    if (isset($response['name'])) {
-        return json_encode(['status' => true, 'message' => 'Notification sent successfully']);
-    } else {
-        return json_encode(['status' => false, 'message' => 'Notification failed', 'response' => $response]);
-    }
+    return json_encode([
+        'status' => true,
+        'message' => 'Push notifications processed',
+        'results' => $responses
+    ]);
 }
 // fwg_aEbXQfijRLIKr4mZjV:APA91bG9T-Eh2eDGwl2vBQ_3OxdqQtHh3y8TyFcJI11JYdCvBrC3Kqa65rFdGTVvvM3If0guh4kp4_Vc6PD_7b0UCfBwrdzLVTOx8UtOccTr6TpZld221o1vUqufLz41gtGP9BlRQIJR
 // e6qczvnGR4Gwz4rJNBKNTR:APA91bH0jd4-UYz_Kboc7CEGFljyrbj7Yfh23A9ZDL9RMCTO9KGB0P2swi11oh0_-LdgC4FbZ5uGPAo5-60vPq54ResmcJc9uaf8n6M5OsBQqVTFCJrO4Og
@@ -290,3 +324,38 @@ function OneSignalPushNotification($headings, $content, $bigPicture, $largeIcon)
         return json_encode(['status' => false]);
     }
 }
+
+// Get firebase access token
+
+function getFirebaseAccessToken()
+{
+    // Try to fetch from cache
+    if (Cache::has('firebase_access_token')) {
+        return Cache::get('firebase_access_token');
+    }
+
+    // Path to your Firebase service account file
+    $jsonKeyFile = public_path('assets/firebase/school-siksha-49dcf-firebase-adminsdk-d51yz-db5d364397.json');
+
+    // Scopes required for Firebase Cloud Messaging
+    $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+
+    // Generate credentials
+    $credentials = new ServiceAccountCredentials($scopes, $jsonKeyFile);
+
+    // Fetch access token
+    $tokenData = $credentials->fetchAuthToken();
+
+    if (!isset($tokenData['access_token'])) {
+        throw new \Exception("Failed to generate Firebase access token.");
+    }
+
+    $accessToken = $tokenData['access_token'];
+    $expiresIn   = $tokenData['expires_in'] ?? 3600;
+
+    // Store token in cache for expiry time (minus a buffer)
+    Cache::put('firebase_access_token', $accessToken, now()->addSeconds($expiresIn - 60));
+
+    return $accessToken;
+}
+

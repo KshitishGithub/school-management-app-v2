@@ -93,7 +93,7 @@
                                 <h2 class="card-middle-avatar">
                                     <a href="javascript:void(0)">
                                         <img class="avatar avatar-sm me-2 avatar-img rounded-circle"
-                                            src="{{ Storage::url('images/registration/' . $student->photo) }}"
+                                            src="{{ asset('uploads/images/registration/' . $student->photo) }}"
                                             alt="User Image">
                                             {{ $student->name }}</a>
                                 </h2>

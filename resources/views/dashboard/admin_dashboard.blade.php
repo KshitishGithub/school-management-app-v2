@@ -14,7 +14,7 @@
                 <div class="row">
                     <div class="col-sm-12">
                         <div class="page-sub-header">
-                            <h3 class="page-title">WWelcome, {{ auth()->user()->name }} !</h3>
+                            <h3 class="page-title">Welcome, {{ auth()->user()->name }} !</h3>
                             {{-- <ul class="breadcrumb">
                                 <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Home</a></li>
                                 <li class="breadcrumb-item active"></li>

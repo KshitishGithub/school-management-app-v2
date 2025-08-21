@@ -142,13 +142,13 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-12">
+                                {{--  <div class="col-md-12">
                                     <div class="form-group">
                                         <label>Firebase Token</label>
                                         <input type="text" value="{{ $settings->firebase_token ?? '' }}"
                                             name="firebase_token" class="form-control" optional='true'>
                                     </div>
-                                </div>
+                                </div>  --}}
                                 <div class="col-md-12">
                                     <div class="form-group">
                                         <label>One Signal Api Key</label>

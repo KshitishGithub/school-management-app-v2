@@ -121,7 +121,7 @@ class SettingController extends Controller
             $setting->country = $request->country;
             $setting->contact = $request->contact;
             $setting->email = $request->email;
-            $setting->firebase_token = $request->firebase_token;
+            // $setting->firebase_token = $request->firebase_token;
             $setting->one_signal_api_key = $request->one_signal_api_key;
             $setting->one_signal_app_id = $request->one_signal_app_id;
             $setting->registration_prefix = $request->registration_prefix;

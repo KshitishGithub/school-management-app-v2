@@ -465,7 +465,7 @@ define('PAGE', 'fees');
                     },
                     success: function(response) {
                         $('#overlayer').hide();
-                        console.log(response.url);
+                        console.log(response);
                         if (response.status) {
                             toastr.success(response.message);
                             $('#feesTable tbody').html('');
