@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendFirebaseNotification;
 use App\Models\attendance;
 use App\Models\class_manage;
 use App\Models\FingerPrint;
@@ -350,12 +351,21 @@ class AttendanceController extends Controller
             //     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRglV4yCe1YieDU-3wottBOn1jOEbI4-LvE0A&s"
             // );
 
+            //Send Notification using queue
+
+            dispatch(new SendFirebaseNotification(
+                [$request->registration_id],
+                "✅✅✅ Attendance Successfully",
+                "$inOut",
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRglV4yCe1YieDU-3wottBOn1jOEbI4-LvE0A&s"
+            ));
+
             $attendance->save();
             $savedAttendance = attendance::find($attendance->id);
 
             return response()->json([
                 'status' => true,
-                'notification' => false,
+                'notification' => true,
                 'message' => 'Attendance successfully.',
                 'attendance' => $savedAttendance->attendance,
                 'time' => Carbon::parse($savedAttendance->updated_at)->format('d-m-y h:i:s A'),
@@ -395,6 +405,12 @@ class AttendanceController extends Controller
             $attendance->inOutStatus = 0;
             $attendance->save();
 
+            dispatch(new SendFirebaseNotification(
+                [$request->registration_id],
+                "✅✅✅ Attendance Successfully",
+                "Student Out from school",
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRglV4yCe1YieDU-3wottBOn1jOEbI4-LvE0A&s"
+            ));
             return response()->json([
                 'status' => true,
                 'message' => 'Student out of school.',

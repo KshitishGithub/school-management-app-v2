@@ -335,7 +335,7 @@ function getFirebaseAccessToken()
     }
 
     // Path to your Firebase service account file
-    $jsonKeyFile = public_path('assets/firebase/school-siksha-49dcf-firebase-adminsdk-d51yz-db5d364397.json');
+    $jsonKeyFile = public_path('assets/firebase/firebase-service-account.json');
 
     // Scopes required for Firebase Cloud Messaging
     $scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
