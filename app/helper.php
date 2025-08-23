@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
-use App\Models\setting;
 use Illuminate\Support\Facades\Http;
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\Cache;
@@ -292,38 +291,41 @@ function FirebasePushNotification($registration_ids = [], $title = 'School Siksh
         'results' => $responses
     ]);
 }
-// fwg_aEbXQfijRLIKr4mZjV:APA91bG9T-Eh2eDGwl2vBQ_3OxdqQtHh3y8TyFcJI11JYdCvBrC3Kqa65rFdGTVvvM3If0guh4kp4_Vc6PD_7b0UCfBwrdzLVTOx8UtOccTr6TpZld221o1vUqufLz41gtGP9BlRQIJR
-// e6qczvnGR4Gwz4rJNBKNTR:APA91bH0jd4-UYz_Kboc7CEGFljyrbj7Yfh23A9ZDL9RMCTO9KGB0P2swi11oh0_-LdgC4FbZ5uGPAo5-60vPq54ResmcJc9uaf8n6M5OsBQqVTFCJrO4Og
+
+
 // ! One signal push notification --------------------------------
-function OneSignalPushNotification($headings, $content, $bigPicture, $largeIcon)
-{
-    $apiKey = setting::all()[0]['one_signal_api_key'];
-    $appId = setting::all()[0]['one_signal_app_id'];
 
-    $headers = [
-        'Content-Type' => 'application/json',
-        'Authorization' => 'Basic ' . $apiKey,
-    ];
+// now onesignal send notification in OneSignalNotification Job
+
+// function OneSignalPushNotification($headings, $content, $bigPicture, $largeIcon)
+// {
+//     $apiKey = setting::all()[0]['one_signal_api_key'];
+//     $appId = setting::all()[0]['one_signal_app_id'];
+
+//     $headers = [
+//         'Content-Type' => 'application/json',
+//         'Authorization' => 'Basic ' . $apiKey,
+//     ];
 
 
-    $body = [
-        'app_id' => $appId,
-        'included_segments' => ['ActiveUser'],
-        'headings' => ['en' => $headings],
-        'contents' => ['en' => $content],
-        'big_picture' => $bigPicture,
-        'large_icon' => $largeIcon,
-    ];
+//     $body = [
+//         'app_id' => $appId,
+//         'included_segments' => ['ActiveUser'],
+//         'headings' => ['en' => $headings],
+//         'contents' => ['en' => $content],
+//         'big_picture' => $bigPicture,
+//         'large_icon' => $largeIcon,
+//     ];
 
-    $response = Http::withHeaders($headers)
-        ->post('https://onesignal.com/api/v1/notifications', $body);
+//     $response = Http::withHeaders($headers)
+//         ->post('https://onesignal.com/api/v1/notifications', $body);
 
-    if ($response->status() == 200) {
-        return json_encode(['status' => true]);
-    } else {
-        return json_encode(['status' => false]);
-    }
-}
+//     if ($response->status() == 200) {
+//         return json_encode(['status' => true]);
+//     } else {
+//         return json_encode(['status' => false]);
+//     }
+// }
 
 // Get firebase access token
 
@@ -358,4 +360,3 @@ function getFirebaseAccessToken()
 
     return $accessToken;
 }
-

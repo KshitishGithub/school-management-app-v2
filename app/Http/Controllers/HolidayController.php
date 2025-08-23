@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendOneSignalNotification;
 use App\Models\holiday;
 use App\Models\setting;
 use Illuminate\Http\Request;
@@ -40,24 +41,26 @@ class HolidayController extends Controller
             $event->start_date = $request->start_date;
             $event->end_date = $request->end_date;
             $event->save();
-            
+
             // ! Send notification using onesignal notification --------------------------------
             $bigPicture = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQANBw7hZLyuB26YccypLwm2cDCFiFBh-k4qA&s';
-            $settings = Setting::all()->first();
-            $largeIcon = url('storage/images/setting/' . $settings->logo);
-            $notification = OneSignalPushNotification("😍😍😍 $request->holiday", "📅 Next $request->start_date to 📅 $request->end_date is holiday", $bigPicture, $largeIcon);
 
-            if (json_decode($notification)->status == true) {
-                return response()->json([
-                    'status' => true,
-                    'message' => "Holiday added successfully.",
-                ]);
-            } else {
-                return response()->json([
-                    'status' => true,
-                    'message' => "Holiday added successfully.",
-                ]);
-            }
+            $settings   = Setting::first();
+            $largeIcon  = asset('uploads/images/setting/' . $settings->logo);
+
+            // 🔥 Dispatch Job instead of direct function call
+            SendOneSignalNotification::dispatch(
+                "😍😍😍 $request->holiday",
+                "📅 Next $request->start_date to 📅 $request->end_date is holiday",
+                $bigPicture,
+                $largeIcon
+            );
+
+            return response()->json([
+                'status' => true,
+                'message' => "Holiday added successfully.",
+            ]);
+
         } else {
 
             return response()->json([

@@ -1,11 +1,11 @@
 @extends('setting.layouts.main')
 @section('setting_content')
     @push('title')
-        <title>Banner Add</title>
+        <title>Add Notice</title>
     @endpush
     @php
         define('INNER_PAGE', 'notice');
-        define('PAGE_BREADCRUMB', 'Banner Setting');
+        define('PAGE_BREADCRUMB', 'Notice Settings');
     @endphp
 
     <div class="row">

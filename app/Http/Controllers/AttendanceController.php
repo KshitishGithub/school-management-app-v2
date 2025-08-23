@@ -407,19 +407,19 @@ class AttendanceController extends Controller
 
             dispatch(new SendFirebaseNotification(
                 [$request->registration_id],
-                "✅✅✅ Attendance Successfully",
-                "Student Out from school",
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRglV4yCe1YieDU-3wottBOn1jOEbI4-LvE0A&s"
+                "🏃‍♀️🏃‍♀️🏃‍♀️ Student out Successfully",
+                "Student out from school",
+                "https://cdn.vectorstock.com/i/500p/34/24/a-girl-going-home-from-school-vector-1273424.jpg"
             ));
             return response()->json([
                 'status' => true,
-                'message' => 'Student out of school.',
+                'message' => 'Student out from school.',
                 'attendance' => $attendance->attendance,
                 'time' => Carbon::parse($attendance->updated_at)->format('d-m-Y h:i:s A'),
             ]);
         } else {
             return response()->json([
-                'status' => false,
+                'status' => false,  
                 'message' => 'Student already out.',
             ]);
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendFirebaseNotification;
 use App\Models\attendance;
 use App\Models\class_manage;
 use App\Models\registration;
@@ -725,7 +726,7 @@ class StudentController extends Controller
             'reasons' => 'required',
             'from_date' => 'required',
             'to_date' => 'required',
-            'letterName' => 'required|mimes:jpeg,jpg,png,JPG,JPEG,PNG|max:2048',
+            // 'letterName' => 'required|mimes:jpeg,jpg,png,JPG,JPEG,PNG|max:2048',
         ]);
 
         if ($validator->fails()) {
@@ -755,11 +756,19 @@ class StudentController extends Controller
             $leave->reasons = $request->reasons;
             $leave->from_date = $request->from_date;
             $leave->to_date = $request->to_date;
-            $leave->letterName = $letterName;
+            // $leave->letterName = $letterName;
             $leave->save();
 
             // Commit the transaction
             DB::commit();
+
+            // Send notification to mobile user
+            dispatch(new SendFirebaseNotification(
+                [$request->registration_id],
+                "Dear {$request->name}",
+                "Your leave added successfully.",
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRwBeDUheKShh9OK2Vg6OjJrnPPUaXpN5LNCA&s"
+            ));
 
             return response()->json([
                 'status' => true,

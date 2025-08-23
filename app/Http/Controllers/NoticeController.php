@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendOneSignalNotification;
 use App\Models\Notice;
 use App\Models\setting;
 use Illuminate\Http\Request;
@@ -62,24 +63,22 @@ class NoticeController extends Controller
 
             // ! Send notification using onesignal notification --------------------------------
             $bigPicture = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRr-bvjB8eEi-689FZhB6CEFhx7B5aMmn2RuA&s';
-            $settings = setting::all()->first();
-            $largeIcon = url('storage/images/setting/' . $settings->logo);
-            $notification = OneSignalPushNotification("📢📢📢 $request->title" ,"📌📌📌 New notice added now",$bigPicture,$largeIcon);
+            $settings   = Setting::first();
+            $largeIcon  = asset('uploads/images/setting/' . $settings->logo);
 
-            if (json_decode($notification)->status == true) {
-                return response()->json([
-                    'status' => true,
-                    'notification' => true,
-                    'message' => "Notice added successfully.",
-                ]);
-            }else{
-                return response()->json([
-                    'status' => true,
-                    'notification' => false,
-                    'message' => "Notice added successfully.",
-                ]);
-            }
+            // 🔥 Dispatch Job instead of direct function call
+            SendOneSignalNotification::dispatch(
+                "📢📢📢 {$request->title}",
+                "📌📌📌 New notice added now",
+                $bigPicture,
+                $largeIcon
+            );
 
+            return response()->json([
+                'status' => true,
+                'notification' => true,
+                'message' => "Notice added successfully.",
+            ]);
         } else {
 
             // Validation failed
@@ -104,30 +103,31 @@ class NoticeController extends Controller
     }
 
     // Delete notice.....
-    public function destroy(Request $request){
-        if (!empty($request->id)){
-            $destroyNotice = Notice::find( $request->id );
+    public function destroy(Request $request)
+    {
+        if (!empty($request->id)) {
+            $destroyNotice = Notice::find($request->id);
             $path = public_path("uploads/images/notice/$destroyNotice->file");
 
-            if ( File::exists( $path ) ) {
-                File::delete( $path );
+            if (File::exists($path)) {
+                File::delete($path);
             }
 
-            if($destroyNotice->delete() ){
+            if ($destroyNotice->delete()) {
                 return response()->json([
-                    'status'=> true,
-                    'message'=> 'Notice deleted successfully.',
+                    'status' => true,
+                    'message' => 'Notice deleted successfully.',
                 ]);
-            }else{
+            } else {
                 return response()->json([
-                    'status'=> false,
-                    'message'=> $destroyNotice->errors(),
+                    'status' => false,
+                    'message' => $destroyNotice->errors(),
                 ]);
             }
-        }else{
+        } else {
             return response()->json([
-                'status'=> false,
-                'message'=> "Request not supported.",
+                'status' => false,
+                'message' => "Request not supported.",
             ]);
         }
     }

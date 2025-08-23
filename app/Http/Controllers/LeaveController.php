@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendFirebaseNotification;
 use App\Models\student_leave;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -107,12 +108,12 @@ class LeaveController extends Controller
             if ($leave->delete()) {
 
                 // ! Send notificatin function --------------------------------
-                $notification = FirebasePushNotification(
-                    [$request->s_id],"Dear $request->name",
-                    "Your $request->fees_type of $request->amount for the month of $request->month have been received successfully.",
-                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShVwg_8v81VD3V4qn89R49mbWM9vzyDodV6A&s");
+                // $notification = FirebasePushNotification(
+                //     [$request->s_id],"Dear $request->name",
+                //     "Your $request->fees_type of $request->amount for the month of $request->month have been received successfully.",
+                //     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShVwg_8v81VD3V4qn89R49mbWM9vzyDodV6A&s");
 
-                    
+
                 return response()->json([
                     'status' => true,
                     'message' => 'Leave deleted successfully.',
@@ -140,6 +141,13 @@ class LeaveController extends Controller
             $leave->approvedBy = Auth::user()->name;
             $leave->save();
 
+            // send approved notification
+            dispatch(new SendFirebaseNotification(
+                [$request->id],
+                "Dear Student",
+                "Your leave approved successfully.",
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGJOlYYlTrSeeeTAeh8UqrkiyxkGK-x-Tsw&s"
+            ));
             return response()->json([
                 'status' => true,
                 'message' => 'Leave approved successfully.',
@@ -160,6 +168,14 @@ class LeaveController extends Controller
             $leave->isApproved = "R";
             $leave->approvedBy = Auth::user()->name;
             $leave->save();
+
+            // send rejected notification
+            dispatch(new SendFirebaseNotification(
+                [$request->id],
+                "Dear Student",
+                "Your leave has been rejected.",
+                "https://www.sylviagillespie.com/wp-content/uploads/2024/11/rejected-5250678_640-1.png"
+            ));
 
             return response()->json([
                 'status' => true,
